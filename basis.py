@@ -1,20 +1,55 @@
+#python3 -m pip install
+
 import numpy as np 
 import pandas as pd 
 import matplotlib.pyplot as plt
-class data:
-    #fileName = r"dataset.xlsx"
-    fileName = r"smallData.xlsx"
+import pyarrow
+import openpyxl
+
+fileName = r"dataset.xlsx"
+#fileName = r"smallData.xlsx"
+featherFilePath = "./featherData.ftr"
+
+
+class DataFrameProcessing:
+    _currentDataFrame = pd.DataFrame()
     def __init__(self):
-        self.dataset = pd.read_excel(self.fileName)
+        self.dataset = pd.read_feather(featherFilePath, columns=None, use_threads=True)
+        self.dataset["Scheduled start"] = self.dataset["Scheduled start"].astype('datetime64[ns]')
+        self._currentDataFrame = self.dataset
+
+    @property
+    def currentDataFrame(self):
+        return self._currentDataFrame
+    
+    @currentDataFrame.setter
+    def currentDataFrame(self, new):
+        self._currentDataFrame = new
+        
+    @staticmethod
+    def excelToFeather(fileName):
+        currentDataFrame = pd.read_excel(fileName)
+        currentDataFrame = currentDataFrame.astype("category")
+        currentDataFrame.to_feather(featherFilePath)
+
+    def setCurrentDataFrameBasedOnCondition(self, condition, column = "Scheduled start"):
+        self.currentDataFrame = self.currentDataFrame[
+            self.currentDataFrame[column].apply(
+                lambda var : eval(condition)
+            )
+        ]
+
+
+class data(DataFrameProcessing):
+
+    def __init__(self):
+        super().__init__()
 
     def groupCountPlot(self, groupby, get):
-        self.dataset.groupby(groupby).count().get(get).plot(kind = "bar", x = groupby, y = get)
-
-    def addColumnBasedOnCondition(self, columnName, condition, columnToApplyConditionOn):
-        self.dataset[columnName] = self.dataset.get(columnToApplyConditionOn).apply(condition)
+        self._currentDataFrame.groupby(groupby).count().get(get).plot(kind = "bar", x = groupby, y = get)
 
     def columnsVersusBasedOnFrequency(self, indexColumn, column, throwawayColumn = "Order"):
-        groupedData = self.dataset.groupby([indexColumn, column]).count().get(throwawayColumn).reset_index()
+        groupedData = self._currentDataFrame.groupby([indexColumn, column]).count().get(throwawayColumn).reset_index()
 
         result = pd.DataFrame()
         result[indexColumn] = groupedData.get(indexColumn).unique()
@@ -25,18 +60,19 @@ class data:
         for obj in groupedData[column].unique():
             result[obj] = groupedData[groupedData.get(column) == obj].get(throwawayColumn)
 
-        result.plot(kind = "bar")
+        return result
+
+    
 
 
 test = data()
 dataset = test.dataset
+test.setCurrentDataFrameBasedOnCondition("var.year >= 2018")
+test.currentDataFrame
 
-#test.columnsVersusBasedOnFrequency("Functional Location", "Order Type")
-#test.columnsVersusBasedOnFrequency("Functional Location", "Manufacturer")
-#test.columnsVersusBasedOnFrequency("Manufacturer", "Functional Location")
-#test.columnsVersusBasedOnFrequency("Functional Location", "Cause Code Text")
-#test.columnsVersusBasedOnFrequency("Functional Location", "Activity Text")
-#test.columnsVersusBasedOnFrequency("Discipline", "Functional Location")
-#test.columnsVersusBasedOnFrequency("Cause Code Text", "Activity Text")
 
 plt.show()
+
+#data.excelToFeather(fileName)
+
+
