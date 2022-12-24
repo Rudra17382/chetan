@@ -16,6 +16,10 @@ class DataFrameProcessing:
     def __init__(self):
         self.dataset = pd.read_feather(featherFilePath, columns=None, use_threads=True)
         self.dataset["Scheduled start"] = self.dataset["Scheduled start"].astype('datetime64[ns]')
+        self.dataset["day"] = self.dataset["Scheduled start"].apply(lambda date : date.day)
+        self.dataset["month"] = self.dataset["Scheduled start"].apply(lambda date : date.month)
+        self.dataset["year"] = self.dataset["Scheduled start"].apply(lambda date : date.year)
+        self.dataset["monthYear"] = self.dataset["month"].apply(str) + "/" + self.dataset["year"].apply(str)
         self._currentDataFrame = self.dataset
 
     @property
@@ -66,10 +70,16 @@ class data(DataFrameProcessing):
 
 
 test = data()
-dataset = test.dataset
 test.setCurrentDataFrameBasedOnCondition("var.year >= 2018")
-test.currentDataFrame
 
+#test.currentDataFrame = test.currentDataFrame.groupby(["monthYear", "Critical"]).count()["Order"].reset_index()
+#test.currentDataFrame["month"] = test.currentDataFrame["monthYear"].apply(lambda date : date.split("/")[0])
+#test.currentDataFrame["year"] = test.currentDataFrame["monthYear"].apply(lambda date : date.split("/")[1])
+
+print(test.columnsVersusBasedOnFrequency("monthYear", "Critical").index.size)
+test.columnsVersusBasedOnFrequency("monthYear", "Critical").hist()
+print(test.currentDataFrame)
+#test.currentDataFrame.plot(kind="bar")
 
 plt.show()
 
