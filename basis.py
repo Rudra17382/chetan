@@ -70,14 +70,14 @@ class data(DataFrameProcessing):
 
 
 test = data()
-test.setCurrentDataFrameBasedOnCondition("var.year >= 2018")
+test.setCurrentDataFrameBasedOnCondition("var.year >= 2022")
 
 #test.currentDataFrame = test.currentDataFrame.groupby(["monthYear", "Critical"]).count()["Order"].reset_index()
 #test.currentDataFrame["month"] = test.currentDataFrame["monthYear"].apply(lambda date : date.split("/")[0])
 #test.currentDataFrame["year"] = test.currentDataFrame["monthYear"].apply(lambda date : date.split("/")[1])
 
-print(test.columnsVersusBasedOnFrequency("monthYear", "Critical").index.size)
-test.columnsVersusBasedOnFrequency("monthYear", "Critical").hist()
+print(test.columnsVersusBasedOnFrequency("monthYear", "Critical").sort_index(key= lambda index : index.map(lambda x : int(x.split("/")[0]))))
+test.columnsVersusBasedOnFrequency("monthYear", "Critical").sort_index(key= lambda index : index.map(lambda x : int(x.split("/")[0]))).plot(kind= "bar")
 print(test.currentDataFrame)
 #test.currentDataFrame.plot(kind="bar")
 
